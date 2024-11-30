@@ -105,7 +105,7 @@ impl SAT {
         for lit in clause_vec {
             let var_id = lit.abs();
             if let Some(&sat_var) = self.var_map.get(&var_id) {
-                let minisat_var = rustsat::types::Var::from(sat_var as usize);
+                let minisat_var = rustsat::types::Var::from(*sat_var as usize);
                 let literal = if lit < 0 {
                     rustsat::types::Lit::from(minisat_var).neg()
                 } else {
@@ -166,7 +166,7 @@ impl SolverAdaptor for SAT {
             rustsat::solvers::SatResult::Sat => {
                 let mut model = HashMap::new();
                 for (&var_id, &sat_var) in &self.var_map {
-                    let minisat_var = rustsat::types::Var::from(sat_var as usize);
+                    let minisat_var = rustsat::types::Var::from(*sat_var as usize);
                     let value = self
                         .solver_inst
                         .model_value(minisat_var)
