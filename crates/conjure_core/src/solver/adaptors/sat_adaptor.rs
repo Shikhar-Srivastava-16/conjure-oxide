@@ -105,7 +105,7 @@ impl SAT {
         for lit in clause_vec {
             let var_id = lit.abs();
             if let Some(&sat_var) = self.var_map.get(&var_id) {
-                let minisat_var = rustsat::types::Var::from(*sat_var as usize);
+                let minisat_var = rustsat::types::Var::from(sat_var as usize);
                 let literal = if lit < 0 {
                     rustsat::types::Lit::from(minisat_var).neg()
                 } else {
@@ -166,7 +166,7 @@ impl SolverAdaptor for SAT {
             rustsat::solvers::SatResult::Sat => {
                 let mut model = HashMap::new();
                 for (&var_id, &sat_var) in &self.var_map {
-                    let minisat_var = rustsat::types::Var::from(*sat_var as usize);
+                    let minisat_var = rustsat::types::Var::from(sat_var as usize);
                     let value = self
                         .solver_inst
                         .model_value(minisat_var)
@@ -317,7 +317,7 @@ pub fn handle_and(e: Expression) -> Result<Vec<Vec<i32>>, CNFError> {
     }
 }
 
-// //CNF Error, may be replaced of integrated with error file
+//CNF Error, may be replaced of integrated with error file
 #[derive(Error, Debug)]
 pub enum CNFError {
     #[error("Variable with name `{0}` not found")]
@@ -340,6 +340,104 @@ pub enum CNFError {
 
     #[error("Unexpected Expression `{0}` found!")]
     UnexpectedExpression(Expression)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, RwLock};
+    use crate::ast::SymbolTable;
+    use crate::context::Context;
+
+    #[test]
+    fn test_simple_sat() {
+        let variables: SymbolTable = SymbolTable::new();
+        let constraints = Expression::Nothing;
+        let context = Arc::new(RwLock::new(Context::new(
+            None,
+            None,
+            vec![],
+            Stats::default(),
+        )));
+
+        let mut conjure_model = ConjureModel::new(variables, constraints, context);
+
+        conjure_model.add_variable(1, conjure_ast::Domain::BoolDomain);
+        conjure_model.add_variable(2, conjure_ast::Domain::BoolDomain);
+        conjure_model.add_variable(3, conjure_ast::Domain::BoolDomain);
+
+        let and_expr = Expression::And(
+            Metadata {
+                clean: false,
+                etype: None,
+            },
+            vec![
+                Expression::Or(
+                    Metadata {
+                        clean: false,
+                        etype: None,
+                    },
+                    vec![
+                        Expression::Reference(
+                            Metadata {
+                                clean: false,
+                                etype: None,
+                            },
+                            Name::MachineName(1),
+                        ),
+                        Expression::Not(
+                            Metadata {
+                                clean: false,
+                                etype: None,
+                            },
+                            Box::new(Expression::Reference(
+                                Metadata {
+                                    clean: false,
+                                    etype: None,
+                                },
+                                Name::MachineName(2),
+                            )),
+                        ),
+                    ],
+                ),
+                Expression::Or(
+                    Metadata {
+                        clean: false,
+                        etype: None,
+                    },
+                    vec![
+                        Expression::Reference(
+                            Metadata {
+                                clean: false,
+                                etype: None,
+                            },
+                            Name::MachineName(2),
+                        ),
+                        Expression::Reference(
+                            Metadata {
+                                clean: false,
+                                etype: None,
+                            },
+                            Name::MachineName(3),
+                        ),
+                    ],
+                ),
+            ],
+        );
+
+        conjure_model.set_constraints(vec![and_expr]);
+
+        let mut solver = SAT::new(conjure_model.clone());
+
+        let mut captured_model = HashMap::new();
+        let callback = |model: &HashMap<i32, bool>| {
+            captured_model.extend(model.clone());
+        };
+
+        let result = solver.solve(callback, private::Internal);
+
+        assert_eq!(result.unwrap(), SolveSuccess::Satisfiable);
+    }
 }
 
 // use std::any::type_name;
