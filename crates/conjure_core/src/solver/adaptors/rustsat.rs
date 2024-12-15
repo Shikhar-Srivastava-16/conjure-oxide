@@ -224,7 +224,7 @@ pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
 
     Ok(ret_vec_of_vecs)
 }
-//CNF Error, may be replaced of integrated with error file
+
 #[derive(Error, Debug)]
 pub enum CNFError {
     #[error("Variable with name `{0}` not found")]
@@ -254,10 +254,7 @@ pub enum CNFError {
 mod tests {
 
     use conjure_ast::ReturnType;
-
     use super::*;
-
-
 
     #[test]
     fn test_handle_and() {

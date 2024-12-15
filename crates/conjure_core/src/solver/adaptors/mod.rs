@@ -3,7 +3,7 @@
 // #[doc(inline)]
 #[doc(inline)]
 pub use minion::Minion;
-pub use sat_adaptor::SAT;
+pub use rustsat::SAT;
 
 mod minion;
-mod sat_adaptor;                                //temp visibility
+mod rustsat;
