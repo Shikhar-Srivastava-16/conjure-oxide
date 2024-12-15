@@ -308,7 +308,7 @@ dependencies = [
  "libc",
  "linkme",
  "log",
- "minion_rs",
+ "_rs",
  "project-root",
  "regex",
  "rustsat",
@@ -345,7 +345,7 @@ dependencies = [
  "glob",
  "linkme",
  "log",
- "minion_rs",
+ "_rs",
  "pretty_assertions",
  "rand",
  "regex",
@@ -739,26 +739,6 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
-
-[[package]]
-name = "minion_rs"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "bindgen",
- "glob",
- "libc",
- "thiserror",
-]
-
-[[package]]
-name = "miniz_oxide"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2d80299ef12ff69b16a84bb182e3b9df68b5a91574d3d4fa6e41b65deec4df1"
-dependencies = [
- "adler2",
-]
 
 [[package]]
 name = "nom"

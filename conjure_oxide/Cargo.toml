@@ -10,7 +10,6 @@ walkdir = "2.5.0"
 
 [dependencies]
 conjure_core = { path = "../crates/conjure_core" }
-minion_rs = { path = "../solvers/minion" }
 
 uniplate = "0.1.2"
 serde = { version = "1.0.214", features = ["derive"] }

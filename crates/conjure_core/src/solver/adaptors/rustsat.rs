@@ -5,7 +5,6 @@ use std::ptr::null;
 use std::vec;
 
 use clap::error;
-use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::Var as satVar;
