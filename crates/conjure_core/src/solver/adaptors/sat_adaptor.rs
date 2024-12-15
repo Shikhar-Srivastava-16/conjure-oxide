@@ -16,7 +16,7 @@ use rustsat_minisat::core::Minisat;
 
 use crate::ast::{Expression, Name};
 use crate::metadata::Metadata;
-use crate::solver::{self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
+use crate::solver::{self, SearchComplete, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
 use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
@@ -112,8 +112,7 @@ impl SolverAdaptor for SAT {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        // solver = self.solver
-        // handle
+
         let cnf_func: rustsat::instances::Cnf = self.model_inst.clone().unwrap().into_cnf().0;
         &self.solver_inst.add_cnf(cnf_func);
         let res = &self.solver_inst.solve().unwrap();
@@ -126,17 +125,20 @@ impl SolverAdaptor for SAT {
             SolverResult::Interrupted => Err(SolverError::Runtime(format!("SatInstance may be invalid, Interrupted.")))?,
         };
 
-        // error thrown always. impermanent
         // will eventually have a SolveSucess instance being returned with Ok(), when the implementation is more permanent.
-        // Ok(SolveSuccess{
-        //     // stats tbd, fails
-        //     stats:SolverStats::with_timings(10.0),
-        //     status: SearchStatus::Complete(())
-        // });
+        // let solve_success = SolveSuccess{
+        //     // arbitrary time
+        //     stats:SolverStats.with_timings(10.0),
+        //     // sat solvers only produce 1 sol?
+        //     status: SearchStatus::Complete((
+        //         // should be correct, recheck
+        //         SearchComplete::HasSolutions
+        //     ))
+        // };
         print!("{}", solver_res);
 
-        Err(OpNotImplemented("solve_mut".to_owned()))
-        // Ok(())
+        // Err(OpNotImplemented("solve_mut".to_owned()))
+        Ok(())
     }
 
     fn solve_mut(
@@ -158,13 +160,6 @@ impl SolverAdaptor for SAT {
     }
 }
 
-pub fn handle_expr(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
-    match e {
-        Expression::And(_, _) => Ok(handle_and(e).unwrap()),
-        _ => Err(CNFError::UnexpectedExpression(e)),
-    }
-}
-
 pub fn get_namevar_as_int(name: Name) -> Result<i32, CNFError> {
     match name {
         Name::MachineName(val) => Ok(val),
@@ -177,9 +172,7 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
         Expression::Not(_, heap_expr) => {
             let expr = *heap_expr;
             match expr {
-                Expression::Nothing => todo!(), // panic?
                 Expression::Not(_md, e) => handle_lit(*e),
-                // todo(ss504): decide
                 Expression::Reference(_md, name) => {
                     let check = get_namevar_as_int(name).unwrap();
                     match check == 0 {
@@ -200,10 +193,6 @@ pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
         Expression::Or(_md, vec) => vec,
         _ => Err(CNFError::UnexpectedExpression(e))?,
     };
-
-    // if vec_clause.len() != 2 {
-    //     panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
-    // };
 
     let mut ret_clause: Vec<i32> = Vec::new();
 
@@ -258,4 +247,97 @@ pub enum CNFError {
 
     #[error("Unexpected Expression `{0}` found!")]
     UnexpectedExpression(Expression)
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    use conjure_ast::ReturnType;
+
+    use super::*;
+
+
+
+    #[test]
+    fn test_handle_and() {
+
+    }
+
+    #[test]
+    fn test_handle_or() {
+        let lit_1 = Expression::Reference(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            Name::MachineName((1))
+        );
+
+        let lit_for_not = Expression::Reference(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            Name::MachineName((1))
+        );
+
+        let not_lit = Expression::Not(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ),
+            lit_for_not
+        );
+        
+        let expr_or = Expression::Or(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            vec![lit_1, not_lit]
+        );
+        
+        assert_eq!(handle_or(lit_1).unwrap(), 1);
+    }
+     
+    #[test]
+    fn test_handle_lit() {
+        let lit_1 = Expression::Reference(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            Name::MachineName((1))
+        );
+        
+        
+        let lit_2 = Expression::Reference(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            Name::MachineName((0))
+        );
+
+        let lit_for_not = Expression::Reference(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ), 
+            Name::MachineName((1))
+        );
+
+        let not_lit = Expression::Not(
+            Metadata(
+                true,
+                Some(ReturnType::Bool)
+            ),
+            lit_for_not
+        );
+        
+        assert_eq!(handle_lit(lit_1).unwrap(), 1);
+        assert_eq!(handle_lit(not_lit).unwrap(), 0);
+        assert_eq!(handle_lit(lit_2).unwrap(), 0);
+    }   
 }

@@ -29,6 +29,7 @@ im = "15.1.0"
 sat_rs = { version = "0.1.0", path = "../../solvers/sat_rs" }
 rustsat-minisat = "0.4.0"
 rustsat = "0.6.1"
+libc = "0.2.168"
 
 [lints]
 workspace = true
